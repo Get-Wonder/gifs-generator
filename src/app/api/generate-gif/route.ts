@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import ffmpeg from 'fluent-ffmpeg';
-import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
+import { writeFile, readFile, unlink, mkdir, stat } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -25,8 +25,17 @@ export async function POST(request: Request) {
     .replace(/\\/g, '/')
     .replace(':', '\\:');
 
-  const outputFolder = join(process.cwd(), 'tmp');
-  await mkdir(outputFolder, { recursive: true });
+  const outputFolder = '/tmp'; // <-- usamos directamente la carpeta raíz tmp
+
+  // Validar si /tmp existe, si no crearla
+  try {
+    await stat(outputFolder);
+    console.log(`✅ Found existing tmp folder at ${outputFolder}`);
+  } catch (err) {
+    console.log(`⚠️ tmp folder not found at ${outputFolder}, creating it...`);
+    await mkdir(outputFolder, { recursive: true });
+    console.log('✅ tmp folder created');
+  }
 
   const timestamp = Date.now();
   const tempVideoPath = join(outputFolder, `input-${timestamp}.mp4`).replace(/\\/g, '/');
