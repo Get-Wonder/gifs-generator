@@ -11,37 +11,35 @@ interface VariableData {
     left: string;
     fontSize: string;
     color: string;
+    horizontalCenter?: boolean;
   };
 }
 
 export async function POST(request: Request) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
+  const fontPath = join(__dirname, '../../../../Roboto-Regular.ttf')
+    .replace(/\\/g, '/')
+    .replace(':', '\\:');
+
+  const outputFolder = join(process.cwd(), 'tmp');
+  await mkdir(outputFolder, { recursive: true });
+
+  const timestamp = Date.now();
+  const tempVideoPath = join(outputFolder, `input-${timestamp}.mp4`).replace(/\\/g, '/');
+  const outputGifPath = join(outputFolder, `output-${timestamp}.gif`).replace(/\\/g, '/');
+  const textFilePaths: string[] = [];
+
   try {
     console.log('🔹 Step 1: Parsing request JSON');
     const { videoUrl, variables } = await request.json();
-
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-
-    const fontPath = join(__dirname, '../../../../Roboto-Regular.ttf').replace(/\\/g, '/').replace(':', '\\:');
-    console.log('🔹 Resolved font path:', fontPath);
-
-    const outputFolder = join(process.cwd(), 'tmp');
-    await mkdir(outputFolder, { recursive: true });
-    console.log('🔹 Ensured tmp folder exists:', outputFolder);
-
-    const timestamp = Date.now();
-    const tempVideoPath = join(outputFolder, `input-${timestamp}.mp4`).replace(/\\/g, '/');
-    const outputGifPath = join(outputFolder, `output-${timestamp}.gif`).replace(/\\/g, '/');
-    console.log('🔹 Temp video path:', tempVideoPath);
-    console.log('🔹 Output GIF path:', outputGifPath);
 
     console.log('🔹 Step 2: Downloading video');
     const videoResponse = await fetch(videoUrl);
     const videoBuffer = await videoResponse.arrayBuffer();
     await writeFile(tempVideoPath, Buffer.from(videoBuffer));
     console.log('✅ Video downloaded and saved');
-
-    const textFilePaths: string[] = [];
 
     console.log('🔹 Step 3: Writing variable text files and building FFmpeg filters');
     const filterStrings = await Promise.all(
@@ -50,19 +48,22 @@ export async function POST(request: Request) {
         const rawTextFilePath = join(outputFolder, `text-${timestamp}-${index}.txt`).replace(/\\/g, '/');
         await writeFile(rawTextFilePath, data.value);
         textFilePaths.push(rawTextFilePath);
-    
-        const ffmpegTextFilePath = rawTextFilePath.replace(':', '\\:');
-    
-        const x = `${parseFloat(data.position.left.replace('%', ''))}*w/100`;
-        const y = `${parseFloat(data.position.top.replace('%', ''))}*h/100`;
-        const fontsize = parseInt(data.position.fontSize.replace('px', ''), 10);
-        const fontcolor = data.position.color;
-    
-        return [
-            `drawtext=textfile='${ffmpegTextFilePath}':x=(w-text_w)/2+2:y=${y}+2:fontsize=${fontsize}:fontcolor=black:fontfile='${fontPath}'`,
-            `drawtext=textfile='${ffmpegTextFilePath}':x=(w-text_w)/2:y=${y}:fontsize=${fontsize}:fontcolor=${fontcolor}:fontfile='${fontPath}'`
-          ].join(',');
 
+        const ffmpegTextFilePath = rawTextFilePath.replace(':', '\\:');
+
+        const fontsize = `${parseInt(data.position.fontSize)}`; // NO 'px'
+        const fontcolor = data.position.color;
+        const horizontalCenter = data.position.horizontalCenter;
+
+        const x = horizontalCenter ? '(w-text_w)/2' : `(w*${parseFloat(data.position.left)}/100)`;
+        const shadowX = horizontalCenter ? '(w-text_w)/2+2' : `(w*${parseFloat(data.position.left)}/100)+2`;
+        const y = `(h*${parseFloat(data.position.top)}/100)`;
+        const shadowY = `(h*${parseFloat(data.position.top)}/100)+2`;
+
+        return [
+          `drawtext=textfile='${ffmpegTextFilePath}':x=${shadowX}:y=${shadowY}:fontsize=${fontsize}:fontcolor=black:fontfile='${fontPath}'`,
+          `drawtext=textfile='${ffmpegTextFilePath}':x=${x}:y=${y}:fontsize=${fontsize}:fontcolor=${fontcolor}:fontfile='${fontPath}'`
+        ].join(',');
       })
     );
 
@@ -72,19 +73,6 @@ export async function POST(request: Request) {
     const command = ffmpeg(tempVideoPath)
       .outputOptions(['-vf', filterComplex, '-f', 'gif', '-loop', '0', '-r', '10'])
       .output(outputGifPath);
-
-    const ffmpegCommandString = [
-      'ffmpeg',
-      '-i', tempVideoPath,
-      '-y',
-      '-vf', `"${filterComplex}"`,
-      '-f', 'gif',
-      '-loop', '0',
-      '-r', '10',
-      outputGifPath,
-    ].join(' ');
-
-    console.log('🔹 FFmpeg full command for manual testing:\n', ffmpegCommandString);
 
     console.log('🔹 Step 5: Running FFmpeg');
     await new Promise((resolve, reject) => {
@@ -104,16 +92,7 @@ export async function POST(request: Request) {
     const gifBuffer = await readFile(outputGifPath);
     console.log('✅ GIF read into buffer');
 
-    console.log('🔹 Step 7: Cleaning up temp files');
-    const cleanupTasks = [
-      unlink(tempVideoPath),
-      unlink(outputGifPath),
-      ...textFilePaths.map((path) => unlink(path)),
-    ];
-    await Promise.all(cleanupTasks);
-    console.log('✅ Temp files cleaned up');
-
-    console.log('🔹 Step 8: Returning response');
+    console.log('🔹 Step 7: Returning response');
     return new NextResponse(gifBuffer, {
       headers: {
         'Content-Type': 'image/gif',
@@ -126,5 +105,14 @@ export async function POST(request: Request) {
       { error: 'Failed to generate GIF', details: String(error) },
       { status: 500 }
     );
+  } finally {
+    console.log('🔹 Step 8: Cleaning up temp files');
+    const cleanupTasks = [
+      unlink(tempVideoPath).catch(() => {}),
+      unlink(outputGifPath).catch(() => {}),
+      ...textFilePaths.map((path) => unlink(path).catch(() => {})),
+    ];
+    await Promise.all(cleanupTasks);
+    console.log('✅ Temp files cleaned up');
   }
 }
