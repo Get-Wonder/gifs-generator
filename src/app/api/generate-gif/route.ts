@@ -25,12 +25,12 @@ export async function POST(request: Request) {
     .replace(/\\/g, '/')
     .replace(':', '\\:');
 
-  const outputFolder = '/tmp'; // <-- usamos directamente la carpeta raíz tmp
+  const outputFolder = '/tmp';
 
-  // Validar si /tmp existe, si no crearla
   try {
     await stat(outputFolder);
     console.log(`✅ Found existing tmp folder at ${outputFolder}`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     console.log(`⚠️ tmp folder not found at ${outputFolder}, creating it...`);
     await mkdir(outputFolder, { recursive: true });
