@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import ffmpeg from 'fluent-ffmpeg';
 import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
 
         const ffmpegTextFilePath = rawTextFilePath.replace(':', '\\:');
 
-        const fontsize = `${parseInt(data.position.fontSize)}`; // NO 'px'
+        const fontsize = `${parseInt(data.position.fontSize)}`;
         const fontcolor = data.position.color;
         const horizontalCenter = data.position.horizontalCenter;
 

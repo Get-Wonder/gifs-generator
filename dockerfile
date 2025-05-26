@@ -1,17 +1,33 @@
-FROM node:22
-
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    apt-get clean
+# Etapa de construcción
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copiar archivos de dependencias
+COPY package*.json ./
 
+# Instalar dependencias
 RUN npm install
 
+# Copiar el resto de la aplicación
 COPY . .
 
+# Construir la aplicación
+RUN npm run build
+
+# Etapa de producción
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar solo los archivos necesarios desde la etapa de construcción
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+
+# Exponer el puerto
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+# Comando para iniciar la aplicación
+CMD ["npm", "start"]
