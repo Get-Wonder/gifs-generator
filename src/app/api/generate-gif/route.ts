@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   try {
     await stat(outputFolder);
     console.log(`✅ Found existing tmp folder at ${outputFolder}`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     console.log(`⚠️ tmp folder not found at ${outputFolder}, creating it...`);
     await mkdir(outputFolder, { recursive: true });

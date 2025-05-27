@@ -160,6 +160,7 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
     <>
       <div className="relative w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-6">
         {gifUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={gifUrl} alt="Generated GIF" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500">
