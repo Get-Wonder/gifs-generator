@@ -30,7 +30,6 @@ export async function POST(request: Request) {
   try {
     await stat(outputFolder);
     console.log(`✅ Found existing tmp folder at ${outputFolder}`);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     console.log(`⚠️ tmp folder not found at ${outputFolder}, creating it...`);
     await mkdir(outputFolder, { recursive: true });
@@ -84,6 +83,11 @@ export async function POST(request: Request) {
     const command = ffmpeg(tempVideoPath)
       .outputOptions(['-vf', filterComplex, '-f', 'gif', '-loop', '0', '-r', '10'])
       .output(outputGifPath);
+
+    // Print the full ffmpeg command line for debugging
+    command.on('start', (cmdLine) => {
+      console.log(`🚀 FFmpeg command: ${cmdLine}`);
+    });
 
     console.log('🔹 Step 5: Running FFmpeg');
     await new Promise((resolve, reject) => {
