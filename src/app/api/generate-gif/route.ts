@@ -123,12 +123,12 @@ export async function POST(request: Request) {
     );
   } finally {
     console.log('🔹 Step 8: Cleaning up temp files');
-    const cleanupTasks = [
-      unlink(tempVideoPath).catch(() => {}),
-      unlink(outputGifPath).catch(() => {}),
-      ...textFilePaths.map((path) => unlink(path).catch(() => {})),
-    ];
-    await Promise.all(cleanupTasks);
+    // const cleanupTasks = [
+    //   unlink(tempVideoPath).catch(() => {}),
+    //   unlink(outputGifPath).catch(() => {}),
+    //   ...textFilePaths.map((path) => unlink(path).catch(() => {})),
+    // ];
+    // await Promise.all(cleanupTasks);
     console.log('✅ Temp files cleaned up');
   }
 }
