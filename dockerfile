@@ -6,13 +6,15 @@ WORKDIR /app
 # Instalar bash y ffmpeg para posibles dependencias en build
 RUN apk add --no-cache bash ffmpeg
 
-# Copiar e instalar dependencias
+# Copiar package files e instalar dependencias
 COPY package*.json ./
 RUN npm install
 
+COPY prisma ./prisma
+
 RUN npx prisma generate
 
-# Copiar código fuente y construir la app
+# Copiar el resto del código fuente y construir la app
 COPY . .
 RUN npm run build
 
@@ -30,8 +32,9 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 
-# ⚠️ Copiar también la fuente
+# ⚠️ Copiar también la fuente y prisma client generado
 COPY --from=builder /app/Roboto-Regular.ttf ./Roboto-Regular.ttf
+COPY --from=builder /app/prisma ./prisma  # <-- si tu código accede a schema en runtime
 
 # Exponer puerto
 EXPOSE 3000
