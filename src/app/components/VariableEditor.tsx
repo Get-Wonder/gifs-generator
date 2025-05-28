@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 interface VariableData {
   value: string;
@@ -29,6 +30,7 @@ interface VariableEditorProps {
 export default function VariableEditor({ initialGif }: VariableEditorProps) {
   const [gif, setGif] = useState<GifCard>(initialGif);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [gifUrl, setGifUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,6 +65,37 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
         },
       },
     }));
+  };
+
+  const handleSaveConfiguration = async () => {
+    try {
+      setIsSaving(true);
+
+      const response = await fetch('/api/update-gif-variables', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gifId: parseInt(gif.id),
+          variables: gif.variables
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save configuration');
+      }
+
+      toast.success('Configuration saved successfully!');
+      
+      // Reload the GIF preview with the updated configuration
+      await generateGifAndSetUrl();
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      toast.error('Failed to save configuration. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const generateGifAndSetUrl = async () => {
@@ -104,7 +137,7 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
       setGifUrl(objectUrl);
     } catch (error) {
       console.error('Error generating GIF:', error);
-      alert('Failed to generate GIF. Please try again.');
+      toast.error('Failed to generate GIF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -148,9 +181,11 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      toast.success('GIF downloaded successfully!');
     } catch (error) {
       console.error('Error generating GIF:', error);
-      alert('Failed to generate GIF. Please try again.');
+      toast.error('Failed to generate GIF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -257,6 +292,14 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
           className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? 'Reloading...' : 'Reload GIF'}
+        </button>
+
+        <button
+          onClick={handleSaveConfiguration}
+          disabled={isSaving}
+          className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? 'Saving...' : 'Save Configuration'}
         </button>
       </div>
     </>

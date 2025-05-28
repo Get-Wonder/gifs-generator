@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gif {
+  id        Int     @id @default(autoincrement())
+  name      String
+  videoUrl  String?
+  gifUrl    String?
+  variables Json?
+
+  @@map("gifs")
+}
