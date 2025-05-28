@@ -65,7 +65,8 @@ export const getAllGifsFromDatabase = async (): Promise<DatabaseGif[]> => {
       }
     });
     
-    return gifs.map(gif => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return gifs.map((gif: any) => ({
       id: gif.id,
       name: gif.name,
       videoUrl: gif.videoUrl,
