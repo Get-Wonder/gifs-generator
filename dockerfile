@@ -10,6 +10,8 @@ RUN apk add --no-cache bash ffmpeg
 COPY package*.json ./
 RUN npm install
 
+RUN npx prisma generate
+
 # Copiar código fuente y construir la app
 COPY . .
 RUN npm run build
