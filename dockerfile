@@ -32,9 +32,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 
-# ⚠️ Copiar también la fuente y prisma client generado
 COPY --from=builder /app/Roboto-Regular.ttf ./Roboto-Regular.ttf
-COPY --from=builder /app/prisma ./prisma  # <-- si tu código accede a schema en runtime
+COPY --from=builder /app/prisma ./prisma
 
 # Exponer puerto
 EXPOSE 3000
