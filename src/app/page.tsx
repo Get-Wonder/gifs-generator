@@ -129,7 +129,7 @@ export default function Home() {
 
   const handleSave = async () => {
     if (!selectedFile || !newGifName) {
-      toast.error('Please provide a name and select a video file');
+      toast.error('Por favor proporciona un nombre y selecciona un archivo de video');
       return;
     }
 
@@ -152,7 +152,7 @@ export default function Home() {
       const data = await response.json();
       console.log('GIF saved successfully:', data);
       
-      toast.success('GIF created successfully!');
+      toast.success('¡GIF creado exitosamente!');
       
       // Refresh the GIFs list
       await fetchGifs();
@@ -161,7 +161,7 @@ export default function Home() {
       handleCloseModal();
     } catch (error) {
       console.error('Error saving GIF:', error);
-      toast.error('Failed to save GIF. Please try again.');
+      toast.error('Error al guardar el GIF. Por favor intenta nuevamente.');
     } finally {
       setIsUploading(false);
     }
@@ -171,7 +171,7 @@ export default function Home() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading GIFs...</div>
+          <div className="text-lg">Cargando GIFs...</div>
         </div>
       </div>
     );
@@ -180,12 +180,12 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">GIF Library</h1>
+        <h1 className="text-3xl font-bold">Biblioteca de GIFs</h1>
         <button
           onClick={() => setIsModalOpen(true)}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
-          Create new GIF
+          Crear nuevo GIF
         </button>
       </div>
 
@@ -193,7 +193,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Create New GIF</h2>
+              <h2 className="text-2xl font-bold">Crear Nuevo GIF</h2>
               <button
                 onClick={handleCloseModal}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -206,18 +206,18 @@ export default function Home() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">GIF Name</label>
+                <label className="block text-sm font-medium mb-2">Nombre del GIF</label>
                 <input
                   type="text"
                   value={newGifName}
                   onChange={(e) => setNewGifName(e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                  placeholder="Enter GIF name"
+                  placeholder="Ingresa el nombre del GIF"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Video File</label>
+                <label className="block text-sm font-medium mb-2">Archivo de Video</label>
                 <div
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
@@ -235,8 +235,8 @@ export default function Home() {
                       <p className="text-green-500">{selectedFile.name}</p>
                     ) : (
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Drag and drop a video file here, or click to select</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Supported formats: MP4, WebM, etc.</p>
+                        <p className="text-gray-500 dark:text-gray-400">Arrastra y suelta un archivo de video aquí, o haz clic para seleccionar</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Formatos soportados: MP4, WebM, etc.</p>
                       </div>
                     )}
                   </label>
@@ -250,7 +250,7 @@ export default function Home() {
                     onClick={handleAddVariable}
                     className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                   >
-                    + Add Variable
+                    + Agregar Variable
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -261,12 +261,12 @@ export default function Home() {
                         value={variable.name}
                         onChange={(e) => handleVariableNameChange(index, e.target.value)}
                         className="flex-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                        placeholder={`Variable ${index + 1} name`}
+                        placeholder={`Nombre de variable ${index + 1}`}
                       />
                       <button
                         onClick={() => handleDeleteVariable(index)}
                         className="px-3 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Delete variable"
+                        title="Eliminar variable"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -283,7 +283,7 @@ export default function Home() {
                   disabled={isUploading || !selectedFile || !newGifName}
                   className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isUploading ? 'Saving...' : 'Save'}
+                  {isUploading ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -294,7 +294,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {gifs.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No GIFs found. Create your first GIF!</p>
+            <p className="text-gray-500 dark:text-gray-400">No se encontraron GIFs. ¡Crea tu primer GIF!</p>
           </div>
         ) : (
           gifs.map((gif) => (
@@ -304,7 +304,14 @@ export default function Home() {
               className="block bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
             >
               <div className="aspect-video bg-gray-200 dark:bg-gray-700">
-                {gif.videoUrl ? (
+                {gif.gifUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={gif.gifUrl}
+                    alt={gif.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : gif.videoUrl ? (
                   <video
                     className="w-full h-full object-cover"
                     src={gif.videoUrl}
@@ -314,7 +321,7 @@ export default function Home() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-500">
-                    No video
+                    Vista previa no disponible
                   </div>
                 )}
               </div>
