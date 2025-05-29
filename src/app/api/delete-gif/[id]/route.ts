@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
-    const gifId = parseInt(params.id);
+    const idParam = request.nextUrl.pathname.split('/').pop();
+    const gifId = parseInt(idParam || '');
 
     if (isNaN(gifId)) {
       return NextResponse.json(
@@ -15,7 +13,6 @@ export async function DELETE(
       );
     }
 
-    // Check if GIF exists
     const existingGif = await prisma.gif.findUnique({
       where: { id: gifId }
     });
@@ -27,12 +24,11 @@ export async function DELETE(
       );
     }
 
-    // Delete the GIF
     await prisma.gif.delete({
       where: { id: gifId }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'GIF deleted successfully'
     });
   } catch (error) {
@@ -42,4 +38,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}
