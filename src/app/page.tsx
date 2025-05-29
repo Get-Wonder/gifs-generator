@@ -22,6 +22,7 @@ type GifCard = {
     };
   };
   url: string;
+  gifUrl?: string | null;
 };
 
 type Variable = {
@@ -64,6 +65,7 @@ export default function Home() {
       id: gif.id.toString(),
       name: gif.name,
       url: gif.videoUrl || '',
+      gifUrl: gif.gifUrl,
       variables: {}
     };
 

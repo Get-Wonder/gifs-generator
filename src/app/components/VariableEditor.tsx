@@ -21,6 +21,7 @@ interface GifCard {
     [key: string]: VariableData;
   };
   url: string;
+  gifUrl?: string | null;
 }
 
 interface VariableEditorProps {
@@ -37,7 +38,14 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
   const [variableFiles, setVariableFiles] = useState<{[key: string]: File | null}>({});
 
   useEffect(() => {
-    generateGifAndSetUrl();
+    // Check if GIF already has a saved gifUrl
+    if (gif.gifUrl) {
+      console.log('Loading existing GIF from URL:', gif.gifUrl);
+      setGifUrl(gif.gifUrl);
+    } else {
+      console.log('No existing GIF URL found, generating new preview...');
+      generateGifAndSetUrl();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -132,10 +140,20 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
         throw new Error('Failed to upload GIF');
       }
 
+      // Get the new gifUrl from the response
+      const uploadData = await uploadResponse.json();
+      const newGifUrl = uploadData.gifUrl;
+
+      // Update local gif state with the new gifUrl
+      setGif(prev => ({
+        ...prev,
+        gifUrl: newGifUrl
+      }));
+
+      // Set the new GIF URL for immediate preview
+      setGifUrl(newGifUrl);
+
       toast.success('¡Configuración guardada y GIF generado exitosamente!');
-      
-      // Reload the GIF preview with the updated configuration
-      await generateGifAndSetUrl();
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast.error('Error al guardar la configuración. Por favor intenta nuevamente.');

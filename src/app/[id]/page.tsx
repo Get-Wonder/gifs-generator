@@ -20,6 +20,7 @@ interface GifCard {
     };
   };
   url: string;
+  gifUrl?: string | null;
 }
 
 export default function GifDetail() {
