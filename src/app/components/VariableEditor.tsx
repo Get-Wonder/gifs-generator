@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 interface VariableData {
@@ -36,6 +37,9 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
   const [isAddVariableModalOpen, setIsAddVariableModalOpen] = useState(false);
   const [newVariableName, setNewVariableName] = useState('');
   const [variableFiles, setVariableFiles] = useState<{[key: string]: File | null}>({});
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Check if GIF already has a saved gifUrl
@@ -381,10 +385,20 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
   };
 
   const handleFileUpload = (variableKey: string, file: File | null) => {
-    setVariableFiles(prev => ({
-      ...prev,
-      [variableKey]: file
-    }));
+    if (file) {
+      // Clear any existing files from other variables
+      const clearedFiles: {[key: string]: File | null} = {};
+      Object.keys(gif.variables).forEach(key => {
+        clearedFiles[key] = key === variableKey ? file : null;
+      });
+      setVariableFiles(clearedFiles);
+    } else {
+      // If removing file, just update the specific variable
+      setVariableFiles(prev => ({
+        ...prev,
+        [variableKey]: null
+      }));
+    }
   };
 
   const handleFileChange = (variableKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -406,6 +420,12 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
     handleFileUpload(variableKey, file);
   };
 
+  // Check if any variable has a file uploaded
+  const hasAnyFile = Object.values(variableFiles).some(file => file !== null);
+  const getVariableWithFile = () => {
+    return Object.entries(variableFiles).find(([, file]) => file !== null)?.[0] || null;
+  };
+
   const readFileContent = async (file: File): Promise<string[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -419,8 +439,43 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
     });
   };
 
+  const handleDeleteGif = async () => {
+    try {
+      setIsDeleting(true);
+
+      const response = await fetch(`/api/delete-gif/${gif.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete GIF');
+      }
+
+      toast.success('¡GIF eliminado exitosamente!');
+      
+      // Navigate back to home
+      router.push('/');
+    } catch (error) {
+      console.error('Error deleting GIF:', error);
+      toast.error('Error al eliminar el GIF. Por favor intenta nuevamente.');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
   return (
     <>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">{gif.name}</h1>
+        <button
+          onClick={() => setIsDeleteModalOpen(true)}
+          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+        >
+          Eliminar GIF
+        </button>
+      </div>
+
       <div className="relative w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-6">
         {gifUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -526,8 +581,14 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
                 <label className="block text-sm font-medium mb-2">Archivo de valores (.txt)</label>
                 <div
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleFileDrop(key, e)}
-                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400"
+                  onDrop={variableFiles[key] || !hasAnyFile ? (e) => handleFileDrop(key, e) : undefined}
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                    variableFiles[key] 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : hasAnyFile 
+                        ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50' 
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+                  }`}
                 >
                   <input
                     type="file"
@@ -535,12 +596,33 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
                     onChange={(e) => handleFileChange(key, e)}
                     className="hidden"
                     id={`file-upload-${key}`}
+                    disabled={hasAnyFile && !variableFiles[key]}
                   />
-                  <label htmlFor={`file-upload-${key}`} className="cursor-pointer">
+                  <label 
+                    htmlFor={`file-upload-${key}`} 
+                    className={hasAnyFile && !variableFiles[key] ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  >
                     {variableFiles[key] ? (
                       <div>
-                        <p className="text-green-500 text-sm">{variableFiles[key]!.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">Haz clic para cambiar archivo</p>
+                        <p className="text-green-600 dark:text-green-400 text-sm font-medium">{variableFiles[key]!.name}</p>
+                        <p className="text-xs text-green-500 dark:text-green-400 mt-1">Archivo seleccionado para generación masiva</p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleFileUpload(key, null);
+                          }}
+                          className="text-xs text-red-500 hover:text-red-700 mt-2 underline"
+                        >
+                          Eliminar archivo
+                        </button>
+                      </div>
+                    ) : hasAnyFile ? (
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Campo deshabilitado</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Ya hay un archivo seleccionado en la variable &ldquo;{getVariableWithFile()}&rdquo;
+                        </p>
                       </div>
                     ) : (
                       <div>
@@ -550,6 +632,11 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
                     )}
                   </label>
                 </div>
+                {hasAnyFile && !variableFiles[key] && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Solo se puede subir un archivo .txt por GIF
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -629,6 +716,51 @@ export default function VariableEditor({ initialGif }: VariableEditorProps) {
                   Agregar Variable
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-red-600">Confirmar Eliminación</h3>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-700 dark:text-gray-300">
+                ¿Estás seguro de que quieres eliminar el GIF &ldquo;<strong>{gif.name}</strong>&rdquo;?
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteGif}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Eliminando...' : 'Aceptar'}
+              </button>
             </div>
           </div>
         </div>

@@ -50,7 +50,6 @@ export default function GifDetail() {
         </svg>
         Volver a la Biblioteca
       </Link>
-      <h1 className="text-3xl font-bold mb-8">{gif.name}</h1>
       <VariableEditor initialGif={gif} />
     </div>
   );
